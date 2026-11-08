@@ -1,4 +1,6 @@
-# 中文 · 写汉字 — a Chinese trainer with a teacher on the other end
+# 中文老师 · Chinese Teacher
+
+**A Chinese trainer with a teacher on the other end.**
 
 A single-file, offline-capable web app for learning Mandarin (HSK1 level), plus a small
 Python server that gives it two things a static page cannot: **local speech recognition** for
