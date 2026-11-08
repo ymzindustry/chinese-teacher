@@ -1,0 +1,5 @@
+{
+  "_comment": "Do not write this by hand: run `python3 teacher_server.py --set-auth` and it creates app/auth.json with a SHA-256 hash (never the plain password). Every /api/* route then needs the session cookie; the static app stays public and model-free for visitors.",
+  "user": "your-username",
+  "sha256": "<sha256 of your password>"
+}

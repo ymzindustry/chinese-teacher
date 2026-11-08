@@ -1,0 +1,12 @@
+# credentials and personal data — never commit
+app/auth.json
+app/.session_secret
+app/state/
+app/results.jsonl
+app/teacher.log.jsonl
+app/access.log
+app/server.log
+runtime/
+__pycache__/
+*.pyc
+.DS_Store

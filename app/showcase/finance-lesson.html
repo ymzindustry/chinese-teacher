@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>金融中文 — Finance lesson</title>
+<style>
+  :root{
+    --bg:#0b0e17; --card:#151a29; --card2:#1c2233; --card3:#232a3e;
+    --ink:#eef1ff; --muted:#96a0c0; --dim:#6a7397; --line:#28304a;
+    --brand:#ff5a5f; --brand2:#ffb347; --ok:#35d0a5; --warn:#ffc857;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:
+      radial-gradient(900px 500px at 50% -10%, #1a2138 0%, transparent 60%),
+      linear-gradient(180deg,#0b0e17,#080a12 70%);
+    color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;justify-content:center;padding:28px 16px 40px}
+  .phone{width:100%;max-width:430px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .seal{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:21px;
+        background:linear-gradient(145deg,var(--brand),#c8353f);box-shadow:0 8px 22px rgba(255,90,95,.3)}
+  h1{font-size:18px;margin:0;font-weight:700}
+  h1 small{display:block;font-size:10px;letter-spacing:1.6px;color:var(--muted);font-weight:500;text-transform:uppercase}
+  .pill{display:inline-block;padding:4px 10px;border-radius:99px;background:var(--card2);border:1px solid var(--line);
+        color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.3px}
+  .pill.gold{color:#2b1c00;background:linear-gradient(135deg,#ffc857,#ff9f43);border:0}
+  .progress{height:5px;border-radius:99px;background:var(--card3);overflow:hidden;margin:0 0 16px}
+  .progress i{display:block;height:100%;width:35%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px 20px 22px;text-align:center;
+        box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .hz{font-size:104px;line-height:1;letter-spacing:4px}
+  .py{font-size:22px;color:var(--brand2);font-weight:650;margin-top:8px}
+  .py .num{color:var(--muted);font-size:13px;letter-spacing:1px;margin-left:6px}
+  .en{color:var(--muted);font-size:15px;margin-top:2px}
+  .ex{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+  .ex b{display:block;color:var(--ink);font-size:19px;font-weight:400;letter-spacing:1px}
+  .ex span{color:var(--brand2);font-size:12px}
+  .spk{width:62px;height:62px;border-radius:50%;display:inline-grid;place-items:center;font-size:24px;
+       background:linear-gradient(135deg,#2a3350,#1d2436);border:1px solid var(--line);margin-top:14px}
+
+  h2{font-size:14px;letter-spacing:.4px;color:var(--muted);font-weight:650;margin:22px 0 10px;text-transform:uppercase}
+  .vocab{display:flex;align-items:center;gap:14px;padding:13px 15px;background:var(--card);
+         border:1px solid var(--line);border-radius:16px;margin-bottom:9px}
+  .vocab .h{font-size:30px;letter-spacing:2px;min-width:64px}
+  .vocab .m{flex:1}
+  .vocab .p{color:var(--brand2);font-weight:600;font-size:15px}
+  .vocab .f{color:var(--muted);font-size:12.5px}
+  .vocab .t{font-size:11px;color:var(--dim);letter-spacing:1px}
+
+  .match{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .mbtn{height:58px;border-radius:14px;border:1px solid var(--line);background:var(--card);
+        display:grid;place-items:center;font-size:24px;letter-spacing:2px}
+  .mbtn.en{font-size:12.5px;color:var(--muted);letter-spacing:0;padding:0 8px;text-align:center}
+  .mbtn.ok{border-color:var(--ok);color:var(--ok);background:rgba(53,208,165,.10)}
+  .mbtn.sel{border-color:var(--brand);background:rgba(255,90,95,.14)}
+  .caption{font-size:11.5px;color:var(--dim);margin-top:10px;text-align:center}
+  .foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin-top:18px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top">
+    <div class="logo">
+      <div class="seal">金</div>
+      <h1>金融中文 <small>Finance · lesson 6</small></h1>
+    </div>
+    <span class="pill gold">6 new words</span>
+  </div>
+  <div class="progress"><i></i></div>
+
+  <div class="hero">
+    <div class="hz">涨</div>
+    <div class="py">zhǎng <span class="num">3</span></div>
+    <div class="en">to rise, to go up</div>
+    <div class="ex">
+      <b>股票涨了。</b>
+      <span>Gǔpiào zhǎng le.</span>
+      <div>The stock went up.</div>
+    </div>
+    <div class="spk">🔊</div>
+  </div>
+
+  <h2>Block 1 · money and markets</h2>
+  <div class="vocab">
+    <div class="h">股票</div>
+    <div class="m"><div class="p">gǔpiào</div><div class="f">shares, stock</div></div>
+    <div class="t">3·4</div>
+  </div>
+  <div class="vocab">
+    <div class="h">跌</div>
+    <div class="m"><div class="p">diē</div><div class="f">to fall, to drop</div></div>
+    <div class="t">1</div>
+  </div>
+  <div class="vocab">
+    <div class="h">市场</div>
+    <div class="m"><div class="p">shìchǎng</div><div class="f">market</div></div>
+    <div class="t">4·3</div>
+  </div>
+  <div class="vocab">
+    <div class="h">风险</div>
+    <div class="m"><div class="p">fēngxiǎn</div><div class="f">risk</div></div>
+    <div class="t">1·3</div>
+  </div>
+
+  <h2>Match them</h2>
+  <div class="match">
+    <div class="mbtn ok">涨</div><div class="mbtn en ok">to rise</div>
+    <div class="mbtn sel">跌</div><div class="mbtn en">risk</div>
+    <div class="mbtn">市场</div><div class="mbtn en">market</div>
+    <div class="mbtn">风险</div><div class="mbtn en">to fall</div>
+  </div>
+  <div class="caption">Tap a character, then its meaning</div>
+
+  <div class="foot"><span>Block 1 of 3</span><span>word 1 of 6</span></div>
+</div>
+</body>
+</html>

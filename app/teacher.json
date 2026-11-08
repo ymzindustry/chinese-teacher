@@ -1,0 +1,12 @@
+{
+  "base_url": "https://api.deepseek.com/v1",
+  "model": "deepseek-chat",
+  "reasoning_effort": "medium",
+  "temperature": 0.7,
+  "max_tokens": 2000,
+  "timeout_s": 90,
+  "api_key_env": "DEEPSEEK_API_KEY",
+  "min_seconds_between_calls": 4,
+  "max_body_bytes": 65536,
+  "pron_reasoning_effort": "low"
+}
