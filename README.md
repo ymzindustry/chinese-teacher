@@ -9,6 +9,20 @@ about it.
 
 Built for one learner (French native, ~1 year of Chinese). Interface in English.
 
+<p>
+  <img src="docs/screenshots/01-lessons.webp" width="240" alt="The path of lessons">
+  <img src="docs/screenshots/02-lesson.webp" width="240" alt="A word screen inside a lesson">
+  <img src="docs/screenshots/03-review.webp" width="240" alt="The two decks">
+</p>
+<p>
+  <img src="docs/screenshots/04-character.webp" width="240" alt="A character card, stroke order running">
+  <img src="docs/screenshots/05-sentence.webp" width="240" alt="A sentence card and its 3x3 keypad">
+  <img src="docs/screenshots/06-teacher.webp" width="240" alt="The teacher's note on a finished lesson">
+</p>
+
+*The path · a word inside a lesson · the two decks · a character card mid stroke-order · a sentence
+being built · the teacher's note attached to a finished lesson.*
+
 ![no dependencies](https://img.shields.io/badge/frontend-none-1f2937) ![stdlib server](https://img.shields.io/badge/server-Python%20stdlib-1f2937) ![offline](https://img.shields.io/badge/offline-first-1f2937)
 
 ---
