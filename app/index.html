@@ -406,6 +406,21 @@
       <button class="btn ghost full" id="restartSent" style="margin-top:8px;padding:10px;font-size:13px">↻ Restart sentences session</button>
       <p class="note" style="margin:10px 0 0">Sentences unlock as you finish lessons. Pinyin prompt, five characters at a time, validate at the end.</p>
     </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="spread">
+        <div>
+          <h2 style="margin:0">Pronunciation</h2>
+          <div class="sm muted" id="pronTxt" style="margin-top:2px">—</div>
+        </div>
+        <div class="pill brand" id="pronPill">0</div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn primary full" id="btnPron">Say it out loud</button>
+      </div>
+      <button class="btn ghost full" id="restartPron" style="margin-top:8px;padding:10px;font-size:13px">↻ Restart pronunciation session</button>
+      <p class="note" style="margin:10px 0 0">Words and sentences you have met, one card at a time: say it, flip, hear the model, grade yourself.</p>
+    </div>
     <div class="card">
       <h2>Two piles</h2>
       <p class="note" style="margin:0">Each day takes the top <b id="perInline">20</b> cards into the study pile. Write the character, flip, judge yourself:
@@ -1218,6 +1233,8 @@ function fresh() {
   return { v: 2, words: {}, lessons: {}, days: {}, events: [], teacher: [], runs: [],
            deck: [], study: { date: "", queue: [] },
            sdeck: [], sstudy: { date: "", queue: [] }, sseed: false,
+           pdeck: [], pstudy: { date: "", queue: [] },
+           pmeta: { done: 0, easy: 0, okay: 0, hard: 0 },
            smeta: { done: 0, right: 0, wrong: 0 },
            meta: { cards: 0, ms: 0, toneR: 0, toneW: 0, shadow: 0, shadowN: 0 },
            settings: { goal: 20, rate: 0.85, perSession: 20, speakChars: false },
@@ -1236,6 +1253,9 @@ function normalizeState(st) {
   if (!st.settings) st.settings = { goal: 20, rate: 0.85, perSession: 20, speakChars: false };
   if (!st.settings.perSession) st.settings.perSession = 20;
   if (st.settings.speakChars === undefined) st.settings.speakChars = false;
+  if (!Array.isArray(st.pdeck)) st.pdeck = [];
+  if (!st.pstudy || !Array.isArray(st.pstudy.queue)) st.pstudy = { date: "", queue: [] };
+  if (!st.pmeta) st.pmeta = { done: 0, easy: 0, okay: 0, hard: 0 };
   if (!st.lessonFeedback || typeof st.lessonFeedback !== "object") st.lessonFeedback = {};
   if (typeof st.savedAt !== "number") st.savedAt = 0;
   return st;
@@ -1544,6 +1564,7 @@ function addToDeck(hz) {
   if (!WMAP[hz]) return;
   if (S.deck.includes(hz) || studyQueue().includes(hz)) return;
   S.deck.unshift(hz);                          // new words come first
+  addToPron(hz);
   save();
 }
 /* ---------- sentence deck: same two piles, one sentence per card ---------- */
@@ -1595,6 +1616,7 @@ function addSentencesToDeck(l) {
     if (!sentByKey(hz)) return;
     if (S.sdeck.includes(hz) || sentQueue().includes(hz)) return;
     S.sdeck.unshift(hz);
+    addToPron(hz);
     n++;
   });
   save();
@@ -1773,6 +1795,144 @@ function endSentSession() {
     </div>`;
   sheet.foot.innerHTML = '<button class="btn primary full" id="sClose">Done</button>';
   $("#sClose").onclick = () => { closeSheet(); renderReview(); renderLessons(); };
+}
+
+/* ---------- pronunciation deck: a word or a sentence, said out loud, then graded ---------- */
+let PRON = null;
+
+function pronKey(hz) { return hz; }
+
+function pronByKey(k) {
+  if (!k) return null;
+  if (WMAP_BASE[k]) {
+    const w = WMAP_BASE[k];
+    return { hz: w.hz, py: w.py, en: w.en, n: [...w.hz].length };
+  }
+  return sentByKey(k);
+}
+
+function pronQueue() {
+  if (!S.pstudy || !Array.isArray(S.pstudy.queue)) S.pstudy = { date: dayKey(), queue: [] };
+  return S.pstudy.queue;
+}
+
+function addToPron(hz) {
+  const item = pronByKey(hz);
+  if (!item) return false;
+  const n = [...item.hz].filter(c => /[\u4e00-\u9fff]/.test(c)).length;
+  if (n < 1 || n > 12) return false;
+  if (!Array.isArray(S.pdeck)) S.pdeck = [];
+  if (S.pdeck.includes(hz) || pronQueue().includes(hz)) return false;
+  S.pdeck.push(hz);
+  return true;
+}
+
+function backfillPron() {
+  if (!Array.isArray(S.pdeck)) S.pdeck = [];
+  let added = 0;
+  Object.keys(S.words || {}).forEach(hz => { if (addToPron(hz)) added++; });
+  (S.sdeck || []).forEach(hz => { if (addToPron(hz)) added++; });
+  if (added) save();
+  return added;
+}
+
+function pullPron(n) {
+  if (!Array.isArray(S.pdeck)) S.pdeck = [];
+  const take = Math.min(n || pullSize(), S.pdeck.length);
+  const pulled = S.pdeck.splice(0, take);
+  S.pstudy = { date: dayKey(), queue: pulled };
+  save();
+  return pulled.length;
+}
+
+function applyPronGrade(hz, g) {
+  const q = pronQueue();
+  const i = q.indexOf(hz);
+  if (i >= 0) q.splice(i, 1);
+  if (g === "easy") S.pdeck.push(hz);        // bottom of the deck
+  else if (g === "okay") S.pdeck.unshift(hz); // top of the deck
+  else q.push(hz);                            // bottom of today's pile
+  S.pmeta.done++; S.pmeta[g]++;
+  save();
+}
+
+function restartPron() {
+  const q = pronQueue();
+  if (!q.length) { toast("No pronunciation session running"); return; }
+  S.pdeck = q.concat(Array.isArray(S.pdeck) ? S.pdeck : []);
+  S.pstudy = { date: dayKey(), queue: [] };
+  save();
+  pullPron(pullSize());
+  renderReview();
+  toast("Today's pronunciation re-cut: " + pronQueue().length);
+}
+
+function startPronDeck() {
+  let q = pronQueue();
+  if (!q.length) {
+    if (!Array.isArray(S.pdeck) || !S.pdeck.length) { toast("Nothing to pronounce yet — meet some words first"); return; }
+    pullPron(pullSize());
+    q = pronQueue();
+  }
+  SESS = { q, live: true, i: 0, t0: Date.now(), mode: "pron" };
+  openSheet();
+  renderPronCard();
+}
+
+function renderPronCard() {
+  const q = pronQueue();
+  if (!q.length) return endPronSession();
+  const it = pronByKey(q[0]);
+  if (!it) { q.shift(); return renderPronCard(); }
+  const n = [...it.hz].filter(c => /[\u4e00-\u9fff]/.test(c)).length;
+  sheet.body.innerHTML = `
+    <div class="progressline"><i style="width:${pct(S.pmeta.done, S.pmeta.done + q.length)}%"></i></div>
+    <div class="spread xs dim" style="margin-bottom:6px">
+      <span>Pronunciation · ${q.length} in the pile</span>
+      <span>${n} character${n > 1 ? "s" : ""}</span>
+    </div>
+    <div class="card center" style="padding:22px 16px;margin-top:8px">
+      <div class="xs dim" style="letter-spacing:1.2px;text-transform:uppercase">say it out loud</div>
+      <div class="hz-big" style="font-size:${n <= 2 ? 68 : 34}px;margin-top:6px">${esc(it.hz)}</div>
+      <div id="pronReveal" class="hidden" style="margin-top:12px">
+        <div class="py" style="font-size:17px">${esc(it.py)}</div>
+        <div class="sm muted" style="margin-top:2px">${esc(it.en)}</div>
+        <button class="speak" id="pronSpk" style="margin-top:10px">🔊</button>
+      </div>
+      <div id="pronRec" class="hidden" style="margin-top:14px"></div>
+      <div id="pronCheck" style="margin-top:10px"></div>
+      <p class="note" style="margin:12px 0 0" id="pronHint">Say it, then flip to check the pinyin.</p>
+    </div>`;
+  $("#pronSpk") && ($("#pronSpk").onclick = () => speak(it.hz, 0.85));
+  sheet.foot.innerHTML = '<button class="btn primary full" id="pronFlip">Flip the card</button>';
+  $("#pronFlip").onclick = () => {
+    $("#pronReveal").classList.remove("hidden");
+    $("#pronHint").textContent = "Listen to the model, compare with what you said, then grade yourself.";
+    $("#pronFlip").remove();
+    if (MODE === "account") {
+      $("#pronRec").classList.remove("hidden");
+      buildRecorder($("#pronRec"), (blob) => showPronCheck(it.hz, blob, $("#pronCheck")));
+    }
+    sheet.foot.innerHTML = `
+      <button class="btn bad" id="pHard" style="flex:1">Hard</button>
+      <button class="btn warn" id="pOkay" style="flex:1">Okay</button>
+      <button class="btn ok" id="pEasy" style="flex:1">Easy</button>`;
+    $("#pHard").onclick = () => { applyPronGrade(it.hz, "hard"); renderReview(); renderPronCard(); };
+    $("#pOkay").onclick = () => { applyPronGrade(it.hz, "okay"); renderReview(); renderPronCard(); };
+    $("#pEasy").onclick = () => { applyPronGrade(it.hz, "easy"); renderReview(); renderPronCard(); };
+  };
+}
+
+function endPronSession() {
+  const M = S.pmeta || { done: 0, easy: 0, okay: 0, hard: 0 };
+  sheet.body.innerHTML = `
+    <div class="card center" style="padding:24px 18px">
+      <div style="font-size:34px">${M.hard === 0 ? "★★★" : M.easy >= M.done * 0.7 ? "★★☆" : "★☆☆"}</div>
+      <h2 style="margin:6px 0 4px">Session done</h2>
+      <p class="muted sm" style="margin:0">${M.easy || 0} easy · ${M.okay || 0} okay · ${M.hard || 0} hard · ${(S.pdeck || []).length} waiting</p>
+    </div>`;
+  sheet.foot.innerHTML = '<button class="btn primary full" id="pClose">Done</button>';
+  $("#pClose").onclick = () => { closeSheet(); renderReview(); };
 }
 
 function streak() {
@@ -2946,8 +3106,8 @@ function paintPron(host, res) {
     ${res.feedback ? `<div class="note" style="margin-top:8px;color:var(--ink)">${esc(res.feedback)}</div>` : ""}
   </div>`;
 }
-function showPronCheck(hz, blob) {
-  const host = $("#pronBox");
+function showPronCheck(hz, blob, hostEl) {
+  const host = hostEl || $("#pronBox");
   if (!host) return;
   if (MODE !== "account") {
     host.innerHTML = `<a class="btn ghost full" href="${API_BASE}/login?next=${encodeURIComponent(location.pathname + location.search)}">
@@ -2955,7 +3115,7 @@ function showPronCheck(hz, blob) {
     return;
   }
   host.innerHTML = '<button class="btn gold full" id="pronBtn">Check my pronunciation</button>';
-  const btn = $("#pronBtn");
+  const btn = host.querySelector("#pronBtn");
   btn.onclick = async () => {
     btn.disabled = true; btn.textContent = "Listening…";
     try {
@@ -3336,7 +3496,23 @@ function renderReview() {
   sb.disabled = !sq.length && !S.sdeck.length;
   sb.onclick = () => startSentenceDeck();
 
-  // cards per session, both decks
+  // pronunciation deck
+  const pq = pronQueue();
+  const pNext = Math.min(pullSize(), (S.pdeck || []).length);
+  $("#pronPill").textContent = pq.length ? pq.length : pNext;
+  $("#pronTxt").textContent = pq.length
+    ? pq.length + " card(s) left in today's pile · " + S.pdeck.length + " waiting"
+    : (S.pdeck.length
+        ? "Today's pile is clear · " + S.pdeck.length + " card(s) in the deck"
+        : "Nothing yet — the words and sentences you meet land here");
+  const pb = $("#btnPron");
+  pb.textContent = pq.length ? "Continue · " + pq.length + " left" : "Say " + pNext + " cards";
+  pb.disabled = !pq.length && !S.pdeck.length;
+  pb.onclick = () => startPronDeck();
+  const rp = $("#restartPron");
+  if (rp) { rp.disabled = !pq.length; rp.onclick = () => restartPron(); }
+
+  // cards per session, all decks
   $("#perVal").textContent = pullSize();
   $("#perInline").textContent = pullSize();
   $("#perMinus").onclick = () => { S.settings.perSession = Math.max(5, pullSize() - 5); save(); renderReview(); };
@@ -3446,6 +3622,7 @@ async function boot() {
     save();
   }
   backfillSentences();
+  backfillPron();
   paintMode();
   renderAll();
   renderTeacherFeed();

@@ -12,16 +12,19 @@ Built for one learner (French native, ~1 year of Chinese). Interface in English.
 <p>
   <img src="docs/screenshots/01-lessons.webp" width="240" alt="The path of lessons">
   <img src="docs/screenshots/02-lesson.webp" width="240" alt="A word screen inside a lesson">
-  <img src="docs/screenshots/03-review.webp" width="240" alt="The two decks">
+  <img src="docs/screenshots/03-review.webp" width="240" alt="The three decks">
 </p>
 <p>
   <img src="docs/screenshots/04-character.webp" width="240" alt="A character card, stroke order running">
   <img src="docs/screenshots/05-sentence.webp" width="240" alt="A sentence card and its 3x3 keypad">
+  <img src="docs/screenshots/07-pronunciation.webp" width="240" alt="A pronunciation card, flipped">
+</p>
+<p>
   <img src="docs/screenshots/06-teacher.webp" width="240" alt="The teacher's note on a finished lesson">
 </p>
 
-*The path · a word inside a lesson · the two decks · a character card mid stroke-order · a sentence
-being built · the teacher's note attached to a finished lesson.*
+*The path · a word inside a lesson · the three decks · a character card mid stroke-order · a sentence
+being built · a pronunciation card · the teacher's note attached to a finished lesson.*
 
 ![no dependencies](https://img.shields.io/badge/frontend-none-1f2937) ![stdlib server](https://img.shields.io/badge/server-Python%20stdlib-1f2937) ![offline](https://img.shields.io/badge/offline-first-1f2937)
 
@@ -44,10 +47,12 @@ Rules baked into the content:
   against the characters taught *up to that lesson* (plus a small set of particles 吗 了 的 呢 吧 是…).
 - The 40 HSK1 base words are assumed known; everything else must appear in a lesson first.
 
-Two flashcard decks, both using the same physical-pile logic:
+Three flashcard decks, all using the same physical-pile logic:
 
 - **Characters** — French prompt, you write the character with your finger, flip, then the back shows
   the **stroke order**, animated stroke by stroke (data embedded, no network), pinyin, example.
+- **Pronunciation** — a word or a sentence you have met, shown alone: say it out loud, flip for the
+  pinyin, the model audio and (logged in) a microphone check, then grade yourself *Hard / Okay / Easy*.
 - **Sentences** — pinyin prompt (English optional), one slot per character, **9 characters in a 3 × 3
   keypad**, validate at the end; your row is coloured green/red above the correction.
 
