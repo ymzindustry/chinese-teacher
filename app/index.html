@@ -347,7 +347,11 @@
       <div class="seal">写</div>
       <h1>中文 <small>Write the character</small></h1>
     </div>
-    <div class="streak">🔥 <b id="streakN">0</b> d</div>
+    <div class="row" style="gap:10px;align-items:center">
+      <div class="streak">🔥 <b id="streakN">0</b> d</div>
+      <button class="btn ghost" id="btnLogoutTop" title="Log out"
+              style="display:none;padding:6px 11px;font-size:12px">Log out</button>
+    </div>
   </div>
 </div>
 
@@ -1281,6 +1285,26 @@ async function pushState() {
       body: JSON.stringify({ savedAt: S.savedAt, state: S })
     });
   } catch (e) { /* offline : on garde tout en local */ }
+}
+
+function importDemoIfEmpty() {
+  if (MODE !== "account" || S.demoImported) return false;
+  const isEmpty = !Object.keys(S.words || {}).length && !(S.runs || []).length &&
+                  !Object.keys(S.lessons || {}).length;
+  if (!isEmpty) { S.demoImported = true; save(); return false; }
+  let demo = null;
+  try { demo = JSON.parse(localStorage.getItem("zh-demo-v2") || "null"); } catch (e) { demo = null; }
+  if (!demo) return false;
+  const hasData = Object.keys(demo.words || {}).length || (demo.runs || []).length ||
+                  Object.keys(demo.lessons || {}).length;
+  if (!hasData) return false;
+  S = normalizeState(Object.assign(fresh(), demo));
+  S.demoImported = true;
+  S.savedAt = Date.now();
+  save();
+  paintMode(); renderAll(); renderReview(); renderTeacherFeed();
+  toast("Your demo progress was moved into your account", 3200);
+  return true;
 }
 
 async function pullState() {
@@ -3002,7 +3026,8 @@ function renderRuns() {
     return;
   }
   el.innerHTML = [...S.runs].reverse().slice(0, 8).map(r => {
-    const sc = r.score || { first: 0, pairs: 0, fillRight: 0, fillTotal: 0 }, t = r.tones;
+    const sc = r.score || { first: 0, pairs: 0, fillRight: 0, fillTotal: 0 },
+          t = r.tones || { right: 0, total: 0 };
     const sh = r.shadow && r.shadow.length
       ? Math.round(r.shadow.reduce((a, b) => a + b, 0) / r.shadow.length / 3 * 100) : null;
     return `<div class="run">
@@ -3364,10 +3389,13 @@ function paintMode() {
   if (link) link.href = API_BASE + "/login?next=" + encodeURIComponent(location.pathname + location.search);
   const out = $("#btnLogout");
   if (out) out.style.display = MODE === "account" ? "inline-flex" : "none";
+  const outTop = $("#btnLogoutTop");
+  if (outTop) outTop.style.display = MODE === "account" ? "inline-flex" : "none";
   const studio = $("#navStudio");
   if (studio) studio.style.display = MODE === "account" ? "flex" : "none";
 }
 $("#btnLogout").onclick = () => { location.href = API_BASE + "/logout"; };
+if ($("#btnLogoutTop")) $("#btnLogoutTop").onclick = () => { location.href = API_BASE + "/logout"; };
 
 async function boot() {
   let who = null;
@@ -3392,6 +3420,7 @@ async function boot() {
   renderTeacherFeed();
   if (MODE === "account") {
     await pullState();
+    importDemoIfEmpty();
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") pushState();
     });
