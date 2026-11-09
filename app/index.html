@@ -1287,6 +1287,37 @@ async function pushState() {
   } catch (e) { /* offline : on garde tout en local */ }
 }
 
+async function importArchive() {
+  if (MODE !== "account") return 0;
+  let rows = [];
+  try {
+    const r = await fetch(API_BASE + "/api/runs", { cache: "no-store" });
+    if (!r.ok) return 0;
+    const d = await r.json();
+    rows = d.runs || [];
+  } catch (e) { return 0; }
+  if (!rows.length) return 0;
+  S.runs = S.runs || [];
+  const seen = new Set(S.runs.map(x => (x.lessonId || "") + "|" + (x.finished || 0)));
+  let added = 0;
+  rows.forEach(run => {
+    const lid = run.lessonId;
+    if (!lid) return;
+    const key = lid + "|" + (run.finished || 0);
+    const st = S.lessons[lid] || (S.lessons[lid] = { done: {} });
+    st.done = st.done || {};
+    if (!st.completed) st.completed = run.finished || Date.now();
+    const part = PARTS.find(p => p.id === lid);      // restore the path ticks too
+    if (part) lessonSteps(part).forEach(s => { if (!st.done[s.key]) st.done[s.key] = st.completed; });
+    if (!seen.has(key)) { seen.add(key); S.runs.push(run); added++; }
+  });
+  S.runs.sort((a, b) => (a.finished || 0) - (b.finished || 0));
+  if (S.runs.length > 60) S.runs = S.runs.slice(-60);
+  save();
+  renderAll(); renderReview(); renderStats();
+  return added;
+}
+
 function importDemoIfEmpty() {
   if (MODE !== "account" || S.demoImported) return false;
   const isEmpty = !Object.keys(S.words || {}).length && !(S.runs || []).length &&
@@ -3421,6 +3452,8 @@ async function boot() {
   if (MODE === "account") {
     await pullState();
     importDemoIfEmpty();
+    const restored = await importArchive();
+    if (restored) toast(restored + " finished lesson(s) restored from your account", 3200);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") pushState();
     });

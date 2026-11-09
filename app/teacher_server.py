@@ -642,6 +642,21 @@ class Handler(BaseHTTPRequestHandler):
             })
         if path == "/api/state":
             return self.send_json(read_user_state(cfg))
+        if path == "/api/runs":
+            try:
+                rows = [json.loads(l) for l in RESULTS_PATH.read_text(encoding="utf-8").splitlines() if l.strip()]
+            except Exception:
+                rows = []
+            runs = []
+            for r in rows:
+                run = r.get("run")
+                if not isinstance(run, dict):
+                    continue
+                if not run.get("finished"):
+                    run = dict(run, finished=int((r.get("t") or 0) * 1000))
+                runs.append(run)
+            runs.sort(key=lambda x: x.get("finished") or 0)
+            return self.send_json({"count": len(runs), "runs": runs[-200:]})
         if self.path.startswith("/api/results"):
             try:
                 rows = [json.loads(l) for l in RESULTS_PATH.read_text(encoding="utf-8").splitlines() if l.strip()]
