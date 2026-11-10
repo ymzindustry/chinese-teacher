@@ -32,7 +32,7 @@ being built · a pronunciation card · the teacher's note attached to a finished
 
 ## What it does
 
-**16 micro-lessons** (10–15 slides each), each with its own focus:
+**18 micro-lessons** across 6 themes (10–15 slides each), each with its own focus:
 
 | Focus | Shape of the lesson |
 |---|---|
