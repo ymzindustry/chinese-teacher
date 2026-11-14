@@ -105,6 +105,10 @@
   .slots{display:flex;gap:8px;justify-content:center;margin-top:10px}
   .slots i{width:26px;height:26px;border:1px dashed var(--line);border-radius:6px;display:block}
 
+  .cardfit{display:flex;flex-direction:column;height:100%;min-height:0}
+  .cardfit .prompt{margin-top:0}
+  .cardfit .padwrap{flex:1 1 auto;min-height:96px;display:flex}
+  .cardfit .padwrap .pad{height:100%;width:100%;aspect-ratio:auto}
   .pad{position:relative;width:100%;aspect-ratio:1/1;background:var(--card);
        border:1px solid var(--line);border-radius:18px;overflow:hidden;touch-action:none}
   .pad::before,.pad::after{content:"";position:absolute;background:
@@ -119,7 +123,14 @@
   .pad canvas{position:relative;width:100%;height:100%;display:block;z-index:1;touch-action:none}
   .pad{-webkit-user-select:none;user-select:none}
   .padtools{display:flex;gap:8px;margin-top:10px}
-  .padtools .btn{flex:1;padding:11px;font-size:13.5px;background:var(--card2);border:1px solid var(--line)}
+  @media (max-height:700px){
+    .cardfit .prompt .fr{font-size:26px}
+    .cardfit .padstep{margin:8px 0 2px}
+    .cardfit .pylab{margin:8px 0 4px}
+    .cardfit .padtools{margin-top:8px}
+  }
+  .padtools .btn:disabled{opacity:.55;color:var(--muted);border-style:dashed}
+  .padtools .btn{flex:1;padding:10px 6px;font-size:13px;white-space:nowrap;background:var(--card2);border:1px solid var(--line)}
 
   .answer{display:none}
   .answer.on{display:block;animation:fade .2s ease}
@@ -196,6 +207,8 @@
   @media (max-height:540px){ .bk .sbox{width:96px;height:96px} .bk .fr-tr{font-size:13px} }
   .pylab{display:block;text-align:left;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
     color:var(--dim);margin:14px 0 6px}
+  .padstep{font-size:12px;letter-spacing:1px;color:var(--dim);margin:12px 0 6px;text-transform:uppercase}
+  .prompt .slots i.on{border-color:var(--brand2);border-style:solid}
   .pyinput{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
     padding:12px 14px;color:var(--ink);font:inherit;font-size:16px;outline:none}
   .pyinput:focus{border-color:var(--brand2)}
@@ -2061,7 +2074,9 @@ function renderCard() {
   SESS.flipped = false; SESS.t0 = Date.now(); SESS.pinyin = "";
   sheet.body.classList.remove("compact");
   const n = [...hz].length;
+  sheet.body.classList.remove("compact");
   sheet.body.innerHTML = `
+   <div class="cardfit">
     <div class="progressline"><i style="width:${SESS.live ? pct(SESS.done, SESS.done + SESS.q.length) : pct(SESS.i, SESS.q.length)}%"></i></div>
     <div class="spread xs dim" style="margin-bottom:12px">
       <span>${SESS.mode === "lesson" ? "Handwriting · lesson" : "Deck"}</span>
@@ -2072,17 +2087,40 @@ function renderCard() {
       <div class="sub">Write it with your finger · ${n} character${n > 1 ? "s" : ""}</div>
       <div class="slots">${"<i></i>".repeat(n)}</div>
     </div>
-    <div id="padhost"></div>
-    <div class="padtools">
-      <button class="btn" id="undoBtn">↶ Undo stroke</button>
-      <button class="btn" id="clearBtn">Clear</button>
-    </div>
     <label class="pylab" for="pyIn">Pinyin (optional)</label>
     <input id="pyIn" class="pyinput" type="text" placeholder="nǐ hǎo · or ni3 hao3"
-           autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">`;
-  const pad = mountPad($("#padhost"));
+           autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+    ${n > 1 ? `<div id="padStep" class="padstep">character 1 / ${n}</div>` : ""}
+    <div id="padhost" class="padwrap"></div>
+    <div class="padtools">
+      <button class="btn" id="undoBtn">↶ Undo</button>
+      <button class="btn" id="clearBtn">Clear</button>
+      ${n > 1 ? `<button class="btn gold" id="nextChar" disabled>Next →</button>` : ""}
+    </div>
+   </div>`;
+
+  let step = 1;
+  const paintStep = () => {
+    const lab = $("#padStep");
+    if (lab) lab.textContent = "character " + step + " / " + n;
+    [...document.querySelectorAll(".prompt .slots i")].forEach((el, i) =>
+      el.classList.toggle("on", i === step - 1));
+    const nb = $("#nextChar");
+    if (nb) nb.textContent = step >= n ? "Last one" : "Next →";
+  };
+  const pad = mountPad($("#padhost"), hasInk => {
+    const nb = $("#nextChar");
+    if (nb) nb.disabled = !hasInk || step >= n;
+  });
+  paintStep();
   $("#undoBtn").onclick = () => pad.undo();
   $("#clearBtn").onclick = () => pad.clear();
+  if ($("#nextChar")) $("#nextChar").onclick = () => {
+    if (step >= n || pad.isEmpty()) return;
+    step += 1;
+    pad.clear();
+    paintStep();
+  };
   sheet.foot.innerHTML = '<button class="btn primary full" id="flipBtn">Done · see the answer</button>';
   $("#flipBtn").onclick = () => {
     const inp = $("#pyIn");
@@ -2095,7 +2133,7 @@ function pyVerdict(w) {
   const typed = (SESS && SESS.pinyin) || "";
   if (!typed.trim()) return "";
   const ok = normPy(typed) === normPy(w.py);
-  const toned = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/.test(typed);
+  const toned = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]|[1-5]/.test(typed);
   const note = ok ? (toned ? "pinyin ✓" : "pinyin ✓ · tones not marked") : "pinyin ✗ — you wrote “" + esc(typed.trim()) + "”";
   return `<div class="xs" style="margin-top:6px;color:${ok ? "var(--ok)" : "var(--bad)"}">${note}</div>`;
 }
