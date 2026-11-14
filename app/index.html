@@ -1606,6 +1606,20 @@ function pullSize() {
   const n = Math.round(+(S.settings && S.settings.perSession) || PULL);
   return Math.max(5, Math.min(60, n));
 }
+// Top the pile back up to n: the deck is one single queue, so asking for
+// ten cards means ten cards even if yesterday's pile was left half done.
+function ensureStudy(n) {
+  const q = studyQueue();
+  const want = Math.max(0, (n || pullSize()) - q.length);
+  if (want > 0 && Array.isArray(S.deck) && S.deck.length) {
+    const pulled = S.deck.splice(0, Math.min(want, S.deck.length));
+    S.study.date = dayKey();
+    S.study.queue = q.concat(pulled);
+    save();
+  }
+  return studyQueue();
+}
+
 function studyQueue() {
   if (!S.study || !Array.isArray(S.study.queue)) S.study = { date: "", queue: [] };
   return S.study.queue;
@@ -1620,14 +1634,14 @@ function pullStudy(n) {
 }
 function restartStudy() {
   const q = studyQueue();
-  if (!q.length) { toast("Today's pile is already empty"); return; }
   S.deck = q.concat(Array.isArray(S.deck) ? S.deck : []);
   S.study = { date: dayKey(), queue: [] };
   save();
-  pullStudy(pullSize());
+  const got = pullStudy(pullSize());
   save();
   renderReview(); renderLessons();
-  toast("Today's pile re-cut: " + studyQueue().length + " cards");
+  toast(got ? "Today's pile re-cut: " + got + " cards"
+            : "Nothing left in the deck to pull");
 }
 
 function restartSentStudy() {
@@ -2060,12 +2074,10 @@ $("#sheetClose").addEventListener("click", closeSheet);
 /* ---------- card session: write → flip → self-grade ---------- */
 let SESS = null;
 function startDeck() {
-  let q = studyQueue();
-  if (!q.length) {
-    if (!S.deck.length) { toast("Your deck is empty — finish a lesson first"); return; }
-    pullStudy(pullSize());
-    q = studyQueue();
+  if (!studyQueue().length && !S.deck.length) {
+    toast("Your deck is empty — finish a lesson first"); return;
   }
+  const q = ensureStudy(pullSize());
   SESS = { q, live: true, i: 0, flipped: false, t0: Date.now(), ms: 0,
            right: 0, close: 0, wrong: 0, mode: "deck", done: 0, start: q.length, onEnd: null };
   openSheet(); renderCard();
@@ -3675,7 +3687,7 @@ function renderReview() {
   $("#perMinus").onclick = () => { S.settings.perSession = Math.max(5, pullSize() - 5); save(); renderReview(); };
   $("#perPlus").onclick = () => { S.settings.perSession = Math.min(60, pullSize() + 5); save(); renderReview(); };
   const rs = $("#restartStudy");
-  if (rs) { rs.disabled = !q.length; rs.onclick = () => restartStudy(); }
+  if (rs) { rs.disabled = !(q.length || (S.deck || []).length); rs.onclick = () => restartStudy(); }
   const rss = $("#restartSent");
   if (rss) { rss.disabled = !sq.length; rss.onclick = () => restartSentStudy(); }
 }

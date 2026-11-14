@@ -47,7 +47,10 @@ Rules baked into the content:
   against the characters taught *up to that lesson* (plus a small set of particles 吗 了 的 呢 吧 是…).
 - The 40 HSK1 base words are assumed known; everything else must appear in a lesson first.
 
-Three flashcard decks, all using the same physical-pile logic:
+Three flashcard decks, all using the same physical-pile logic — one single queue: asking for ten
+cards takes the first ten of the file, *missed* puts the card back at the end of today's pile until
+you clear it, *almost* puts it at the head of the cards you did not take today, *right* sends it to
+the very bottom of the file:
 
 - **Characters** — French prompt, you write the character with your finger (undo the last stroke
   anytime) and can **type the pinyin** as a self-check, then *Done* flips the card: the back shows the
