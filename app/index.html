@@ -133,6 +133,9 @@
     .cardfit .padtools{margin-top:8px}
   }
   .padtools .btn:disabled{opacity:.55;color:var(--muted);border-style:dashed}
+  .padtools .btn.gold:not(:disabled){background:linear-gradient(135deg,#ffc857,#ff9f43);
+    color:#2b1c00;border-color:transparent;font-weight:600;
+    box-shadow:0 6px 18px rgba(255,159,67,.22)}
   .padtools .btn{flex:1;padding:10px 6px;font-size:13px;white-space:nowrap;background:var(--card2);border:1px solid var(--line)}
 
   .answer{display:none}
@@ -210,6 +213,8 @@
   @media (max-height:540px){ .bk .sbox{width:96px;height:96px} .bk .fr-tr{font-size:13px} }
   .pylab{display:block;text-align:left;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
     color:var(--dim);margin:14px 0 6px}
+  .chgloss{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;text-align:center}
+  .chgloss b{color:var(--ink);font-weight:400;font-size:15px;margin-right:2px}
   .padstep{font-size:12px;letter-spacing:1px;color:var(--dim);margin:12px 0 6px;text-transform:uppercase}
   .prompt .slots i.on{border-color:var(--brand2);border-style:solid}
   .pyinput{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
@@ -1309,6 +1314,8 @@ let MODE = "demo";
 const OLDKEY = "zh-progress-v1";
 const INTERVALS = [0, 1, 2, 4, 8, 16, 32];      // days per box 0..5
 
+const CHGLOSS = {"我": "I, me", "们": "plural suffix", "谢": "to thank", "再": "again", "见": "to see, to meet", "名": "name", "字": "character, word", "老": "old", "师": "teacher", "学": "to study", "生": "to be born, pupil", "中": "middle, China", "国": "country", "文": "language, writing", "朋": "friend", "友": "friend", "米": "rice", "饭": "meal, rice", "今": "now, today", "天": "day, sky", "明": "bright, next", "昨": "yesterday", "现": "now", "在": "at, to be at", "多": "many", "少": "few, little", "手": "hand", "机": "machine", "时": "time", "间": "between, space", "校": "school", "认": "to recognise", "识": "to know", "高": "high, tall", "兴": "interest (高兴 = glad)", "请": "please, to invite", "问": "to ask", "法": "law, France", "便": "convenient", "宜": "suitable (便宜 = cheap)", "这": "this", "个": "measure word", "一": "one", "点": "point, o'clock", "可": "can", "以": "by means of", "菜": "dish, vegetable", "单": "list, single", "服": "clothes, to serve", "务": "service, business", "员": "member, staff", "面": "face, noodles", "条": "measure for long things", "牛": "cow, beef", "肉": "meat", "好": "good", "吃": "to eat", "买": "to buy", "共": "together", "早": "early", "上": "up, on", "午": "noon", "下": "down, below", "晚": "late, evening", "几": "how many", "有": "to have", "空": "empty, free", "候": "to wait, time", "起": "to rise, to get up", "怎": "how", "么": "question suffix", "样": "kind, appearance", "地": "ground", "铁": "iron", "直": "straight", "附": "attached, near", "近": "near", "出": "to go out", "口": "mouth, exit", "然": "so, thus", "后": "after", "分": "minute, to divide", "钟": "clock", "走": "to walk", "路": "road", "不": "not", "客": "guest", "气": "air, weather", "雨": "rain", "伞": "umbrella"};
+
 const WMAP = {};
 WORDS.forEach(w => { WMAP[w.hz] = w; });
 
@@ -2140,6 +2147,15 @@ function renderCard() {
   };
 }
 
+function glossLine(hz) {
+  const cs = [...hz];
+  if (cs.length < 2) return "";
+  const parts = cs.map(c => CHGLOSS[c]
+    ? `<b>${c}</b> ${esc(CHGLOSS[c])}`
+    : `<b>${c}</b>`);
+  return `<div class="chgloss">${parts.join(" &middot; ")}</div>`;
+}
+
 function pyVerdict(w) {
   const typed = (SESS && SESS.pinyin) || "";
   if (!typed.trim()) return "";
@@ -2225,6 +2241,7 @@ function flipCard() {
         <span class="py" style="margin:0">${esc(w.py)} <span class="num">${tonesTxt(w)}</span></span>
       </div>
       ${pyVerdict(w)}
+      ${glossLine(hz)}
       <div class="fr-tr">${esc(w.en)}</div>
       <div class="row bkrow" style="justify-content:center">
         <button class="speak" id="spk">🔊</button>
