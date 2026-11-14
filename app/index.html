@@ -3670,7 +3670,10 @@ function renderReview() {
         ? "Today's pile is clear · " + S.deck.length + " card(s) in the deck"
         : "Deck empty — finish a lesson and its words land on top");
   const btn = $("#btnReview");
-  btn.textContent = q.length ? "Continue · " + q.length + " left" : "Study " + nextPull + " characters";
+  const willPull = Math.min(pullSize(), q.length + (S.deck || []).length);
+  btn.textContent = !q.length ? "Study " + willPull + " characters"
+                  : willPull === q.length ? "Continue · " + q.length + " left"
+                  : "Continue · " + willPull + " cards (" + q.length + " left + " + (willPull - q.length) + " new)";
   btn.disabled = !q.length && !S.deck.length;
   btn.onclick = () => startDeck();
 
