@@ -49,8 +49,10 @@ Rules baked into the content:
 
 Three flashcard decks, all using the same physical-pile logic:
 
-- **Characters** — French prompt, you write the character with your finger, flip, then the back shows
-  the **stroke order**, animated stroke by stroke (data embedded, no network), pinyin, example.
+- **Characters** — French prompt, you write the character with your finger (undo the last stroke
+  anytime) and can **type the pinyin** as a self-check, then *Done* flips the card: the back shows the
+  **stroke order** animated stroke by stroke (data embedded, no network), the pinyin, the example, and
+  whether your typed pinyin was right.
 - **Pronunciation** — a word or a sentence you have met, shown alone: say it out loud, flip for the
   pinyin, the model audio and (logged in) a microphone check, then grade yourself *Hard / Okay / Easy*.
 - **Sentences** — pinyin prompt (English optional), one slot per character, **9 characters in a 3 × 3

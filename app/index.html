@@ -194,6 +194,11 @@
   @media (max-height:720px){ .bk .bkex{display:none} }
   @media (max-height:620px){ .bk .sbox{width:118px;height:118px} .bk .hz-big{font-size:30px} }
   @media (max-height:540px){ .bk .sbox{width:96px;height:96px} .bk .fr-tr{font-size:13px} }
+  .pylab{display:block;text-align:left;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
+    color:var(--dim);margin:14px 0 6px}
+  .pyinput{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;color:var(--ink);font:inherit;font-size:16px;outline:none}
+  .pyinput:focus{border-color:var(--brand2)}
   .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}
   .keypad .opt{width:100%;height:58px;display:grid;place-items:center;font-size:25px;border-radius:14px}
   .sbox{width:170px;height:170px;margin:12px auto 6px;position:relative;border-radius:14px;
@@ -2053,7 +2058,7 @@ function renderCard() {
   const hz = SESS.live ? SESS.q[0] : SESS.q[SESS.i];
   if (!hz) return endSession();
   const w = WMAP[hz];
-  SESS.flipped = false; SESS.t0 = Date.now();
+  SESS.flipped = false; SESS.t0 = Date.now(); SESS.pinyin = "";
   sheet.body.classList.remove("compact");
   const n = [...hz].length;
   sheet.body.innerHTML = `
@@ -2069,14 +2074,30 @@ function renderCard() {
     </div>
     <div id="padhost"></div>
     <div class="padtools">
-      <button class="btn" id="undoBtn">↶ Undo</button>
+      <button class="btn" id="undoBtn">↶ Undo stroke</button>
       <button class="btn" id="clearBtn">Clear</button>
-    </div>`;
+    </div>
+    <label class="pylab" for="pyIn">Pinyin (optional)</label>
+    <input id="pyIn" class="pyinput" type="text" placeholder="nǐ hǎo · or ni3 hao3"
+           autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">`;
   const pad = mountPad($("#padhost"));
   $("#undoBtn").onclick = () => pad.undo();
   $("#clearBtn").onclick = () => pad.clear();
-  sheet.foot.innerHTML = '<button class="btn primary full" id="flipBtn">Flip the card</button>';
-  $("#flipBtn").onclick = flipCard;
+  sheet.foot.innerHTML = '<button class="btn primary full" id="flipBtn">Done · see the answer</button>';
+  $("#flipBtn").onclick = () => {
+    const inp = $("#pyIn");
+    SESS.pinyin = inp ? inp.value : "";
+    flipCard();
+  };
+}
+
+function pyVerdict(w) {
+  const typed = (SESS && SESS.pinyin) || "";
+  if (!typed.trim()) return "";
+  const ok = normPy(typed) === normPy(w.py);
+  const toned = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/.test(typed);
+  const note = ok ? (toned ? "pinyin ✓" : "pinyin ✓ · tones not marked") : "pinyin ✗ — you wrote “" + esc(typed.trim()) + "”";
+  return `<div class="xs" style="margin-top:6px;color:${ok ? "var(--ok)" : "var(--bad)"}">${note}</div>`;
 }
 
 /* ---------- stroke order: the character is drawn one stroke at a time ---------- */
@@ -2127,6 +2148,11 @@ function bindStrokes(hz) {
   if (b) b.onclick = () => playStrokes(hz, 0);
 }
 
+function normPy(t) {
+  return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[0-9]/g, "").replace(/[^a-z]/g, "");
+}
+
 function flipCard() {
   const hz = SESS.live ? SESS.q[0] : SESS.q[SESS.i], w = WMAP[hz];
   SESS.flipped = true;
@@ -2149,6 +2175,7 @@ function flipCard() {
         <span class="hz-big">${esc(hz)}</span>
         <span class="py" style="margin:0">${esc(w.py)} <span class="num">${tonesTxt(w)}</span></span>
       </div>
+      ${pyVerdict(w)}
       <div class="fr-tr">${esc(w.en)}</div>
       <div class="row bkrow" style="justify-content:center">
         <button class="speak" id="spk">🔊</button>
