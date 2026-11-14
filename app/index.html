@@ -1665,6 +1665,30 @@ function applyDeckGrade(hz, g) {
   else q.push(hz);                             // bottom of today's pile
   save();
 }
+// The deck only ever received the words of a lesson finished *on this device*.
+// Lessons restored from the account archive, or a deck that was emptied by a
+// stale sync, left the learner with almost nothing to review — put back every
+// word belonging to a lesson already completed.
+function backfillDeck() {
+  if (!Array.isArray(S.deck)) S.deck = [];
+  const have = new Set(S.deck.concat(studyQueue()));
+  const order = [];
+  const push = hz => {
+    if (!WMAP[hz] || have.has(hz) || order.includes(hz)) return;
+    order.push(hz);
+  };
+  LESSONS.forEach(l => {
+    const st = S.lessons[l.id];
+    if (!st || !st.completed) return;
+    l.words.forEach(push);
+  });
+  Object.keys(S.words || {}).forEach(push);
+  if (!order.length) return 0;
+  S.deck = order.concat(S.deck);
+  save();
+  return order.length;
+}
+
 function addToDeck(hz) {
   if (!WMAP[hz]) return;
   if (S.deck.includes(hz) || studyQueue().includes(hz)) return;
@@ -3799,11 +3823,16 @@ async function boot() {
     await pullState();
     importDemoIfEmpty();
     const restored = await importArchive();
+    const back = backfillDeck();
+    backfillSentences();
+    backfillPron();
     if (restored) toast(restored + " finished lesson(s) restored from your account", 3200);
+    else if (back) toast(back + " card(s) put back in your deck", 2600);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") pushState();
     });
   }
+  if (MODE !== "account") backfillDeck();
   if (MODE === "account") checkTeacher();
   else { $("#teacherStatus").textContent = "demo · teacher locked"; $("#teacherModel").textContent = "demo"; }
 }
